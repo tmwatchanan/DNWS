@@ -54,28 +54,28 @@ namespace DNWS
 
             public string path
             {
-                get { return _path;}
-                set {_path = value;}
+                get { return _path; }
+                set { _path = value; }
             }
             public string type
             {
-                get { return _type;}
-                set {_type = value;}
+                get { return _type; }
+                set { _type = value; }
             }
             public bool preprocessing
             {
-                get { return _preprocessing;}
-                set {_preprocessing = value;}
+                get { return _preprocessing; }
+                set { _preprocessing = value; }
             }
             public bool postprocessing
             {
-                get { return _postprocessing;}
-                set {_postprocessing = value;}
+                get { return _postprocessing; }
+                set { _postprocessing = value; }
             }
             public IPlugin reference
             {
-                get { return _reference;}
-                set {_reference = value;}
+                get { return _reference; }
+                set { _reference = value; }
             }
         }
         // Get config from config manager, e.g., document root and port
@@ -96,13 +96,14 @@ namespace DNWS
             plugins = new Dictionary<string, PluginInfo>();
             // load plugins
             var sections = Program.Configuration.GetSection("Plugins").GetChildren();
-            foreach(ConfigurationSection section in sections) {
+            foreach (ConfigurationSection section in sections)
+            {
                 PluginInfo pi = new PluginInfo();
                 pi.path = section["Path"];
                 pi.type = section["Class"];
                 pi.preprocessing = section["Preprocessing"].ToLower().Equals("true");
                 pi.postprocessing = section["Postprocessing"].ToLower().Equals("true");
-                pi.reference = (IPlugin) Activator.CreateInstance(Type.GetType(pi.type));
+                pi.reference = (IPlugin)Activator.CreateInstance(Type.GetType(pi.type));
                 plugins[section["Path"]] = pi;
             }
         }
@@ -171,27 +172,33 @@ namespace DNWS
             request.addProperty("RemoteEndPoint", _client.RemoteEndPoint.ToString());
 
             // We can handle only GET now
-            if(request.Status != 200) {
+            if (request.Status != 200)
+            {
                 response = new HTTPResponse(request.Status);
             }
             else
             {
                 bool processed = false;
                 // pre processing
-                foreach(KeyValuePair<string, PluginInfo> plugininfo in plugins) {
-                    if(plugininfo.Value.preprocessing) {
+                foreach (KeyValuePair<string, PluginInfo> plugininfo in plugins)
+                {
+                    if (plugininfo.Value.preprocessing)
+                    {
                         plugininfo.Value.reference.PreProcessing(request);
                     }
                 }
                 // plugins
-                foreach(KeyValuePair<string, PluginInfo> plugininfo in plugins) {
-                    if(request.Filename.StartsWith(plugininfo.Key)) {
+                foreach (KeyValuePair<string, PluginInfo> plugininfo in plugins)
+                {
+                    if (request.Filename.StartsWith(plugininfo.Key))
+                    {
                         response = plugininfo.Value.reference.GetResponse(request);
                         processed = true;
                     }
                 }
                 // local file
-                if(!processed) {
+                if (!processed)
+                {
                     if (request.Filename.Equals(""))
                     {
                         response = getFile(ROOT + "/index.html");
@@ -202,16 +209,19 @@ namespace DNWS
                     }
                 }
                 // post processing pipe
-                foreach(KeyValuePair<string, PluginInfo> plugininfo in plugins) {
-                    if(plugininfo.Value.postprocessing) {
+                foreach (KeyValuePair<string, PluginInfo> plugininfo in plugins)
+                {
+                    if (plugininfo.Value.postprocessing)
+                    {
                         response = plugininfo.Value.reference.PostProcessing(response);
                     }
                 }
             }
             // Generate response
             ns.Write(Encoding.UTF8.GetBytes(response.header), 0, response.header.Length);
-            if(response.body != null) {
-              ns.Write(response.body, 0, response.body.Length);
+            if (response.body != null)
+            {
+                ns.Write(response.body, 0, response.body.Length);
             }
 
             // Shuting down
@@ -261,7 +271,8 @@ namespace DNWS
         /// </summary>
         public void Start()
         {
-            while (true) {
+            while (true)
+            {
                 try
                 {
                     // Create listening socket, queue size is 5 now.
@@ -279,6 +290,31 @@ namespace DNWS
                 }
                 _port = _port + 1;
             }
+            int workerThreads;
+            int portThreads;
+
+            ThreadPool.GetMinThreads(out workerThreads, out portThreads);
+            Console.WriteLine("\nMinimum worker threads: \t{0}" +
+                "\nMinimum completion port threads: {1}",
+                workerThreads, portThreads);
+
+            // ThreadPool.SetMinThreads(12000, portThreads);
+
+            ThreadPool.GetMinThreads(out workerThreads, out portThreads);
+            Console.WriteLine("\nMinimum worker threads: \t{0}" +
+            "\nMinimum completion port threads: {1}",
+            workerThreads, portThreads);
+
+            ThreadPool.GetMaxThreads(out workerThreads, out portThreads);
+            Console.WriteLine("\nMaximum worker threads: \t{0}" +
+                "\nMaximum completion port threads: {1}",
+                workerThreads, portThreads);
+
+            ThreadPool.GetAvailableThreads(out workerThreads,
+                out portThreads);
+            Console.WriteLine("\nAvailable worker threads: \t{0}" +
+                "\nAvailable completion port threads: {1}\n",
+                workerThreads, portThreads);
             while (true)
             {
                 try
@@ -292,9 +328,16 @@ namespace DNWS
                     // hp.Process();
                     // End single therad
                     // Start multi-threads
-                    Thread threadCaller = new Thread(new ThreadStart(hp.Process));
-                    threadCaller.Start();
+                    // Thread threadCaller = new Thread(new ThreadStart(hp.Process));
+                    // threadCaller.Start();
                     // End multi-threads
+                    // Start thread pool
+                    ThreadPool.QueueUserWorkItem(new WaitCallback(delegate (object state)
+                    {
+                        var hpObject = (HTTPProcessor)hp;
+                        hpObject.Process();
+                    }), null);
+                    // End thread pool
                 }
                 catch (Exception ex)
                 {
