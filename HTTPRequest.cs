@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -9,8 +10,8 @@ namespace DNWS
   {
     protected String _url;
     protected String _filename;
-    protected static Dictionary<String, String> _propertyListDictionary = null;
-    protected static Dictionary<String, String> _requestListDictionary = null;
+    protected static ConcurrentDictionary<String, String> _propertyListDictionary = null;
+    protected static ConcurrentDictionary<String, String> _requestListDictionary = null;
 
     protected String _body;
 
@@ -44,7 +45,7 @@ namespace DNWS
     }
     public HTTPRequest(String request)
     {
-      _propertyListDictionary = new Dictionary<String, String>();
+      _propertyListDictionary = new ConcurrentDictionary<String, String>();
       String[] lines = Regex.Split(request, "\\n");
 
       if(lines.Length == 0) {
@@ -75,9 +76,10 @@ namespace DNWS
       if (parts.Length > 1 && parts[1].Contains('&'))
       {
         //Ref: http://stackoverflow.com/a/4982122
-        _requestListDictionary = parts[1].Split('&').Select(x => x.Split('=')).ToDictionary(x => x[0].ToLower(), x => x[1]);
+        var _requestListDictionaryOriginal = parts[1].Split('&').Select(x => x.Split('=')).ToDictionary(x => x[0].ToLower(), x => x[1]);
+        _requestListDictionary = new ConcurrentDictionary<string, string>(_requestListDictionaryOriginal);
       } else{
-        _requestListDictionary = new Dictionary<String, String>();
+        _requestListDictionary = new ConcurrentDictionary<String, String>();
       }
 
       if(lines.Length == 1) return;
@@ -88,7 +90,8 @@ namespace DNWS
         if(pair.Length == 1) { // handle post body
           if(pair[0].Length > 1) { //FIXME, this is a quick hack
             Dictionary<String, String> _bodys = pair[0].Split('&').Select(x => x.Split('=')).ToDictionary(x => x[0].ToLower(), x => x[1]);
-            _requestListDictionary = _requestListDictionary.Concat(_bodys).ToDictionary(x=>x.Key, x=>x.Value);
+            var _requestListDictionaryOriginal = _requestListDictionary.Concat(_bodys).ToDictionary(x=>x.Key, x=>x.Value);
+            _requestListDictionary = new ConcurrentDictionary<string, string>(_requestListDictionaryOriginal);
           }
         } else { // Length == 2, GET url request
           addProperty(pair[0], pair[1]);
