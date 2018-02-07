@@ -298,7 +298,7 @@ namespace DNWS
                 "\nMinimum completion port threads: {1}",
                 workerThreads, portThreads);
 
-            // ThreadPool.SetMinThreads(12000, portThreads);
+            // ThreadPool.SetMinThreads(20000, portThreads);
 
             ThreadPool.GetMinThreads(out workerThreads, out portThreads);
             Console.WriteLine("\nMinimum worker threads: \t{0}" +
@@ -334,9 +334,10 @@ namespace DNWS
                     // Start thread pool
                     ThreadPool.QueueUserWorkItem(new WaitCallback(delegate (object state)
                     {
-                        var hpObject = (HTTPProcessor)hp;
-                        hpObject.Process();
-                    }), null);
+                        HTTPProcessor threadHP = (HTTPProcessor)state;
+                        threadHP.Process();
+                    }), hp);
+
                     // End thread pool
                 }
                 catch (Exception ex)
