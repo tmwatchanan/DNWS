@@ -243,6 +243,8 @@ namespace DNWS
         protected Socket clientSocket;
         private static DotNetWebServer _instance = null;
         protected int id;
+        protected string ThreadMode = Program.Configuration["Thread"];
+        protected int NumMaxThreads = Convert.ToInt32(Program.Configuration["MaxThreads"]);
 
         private DotNetWebServer(int port, Program parent)
         {
@@ -290,32 +292,38 @@ namespace DNWS
                 }
                 _port = _port + 1;
             }
-            int workerThreads;
-            int portThreads;
+            _parent.Log("Thread Mode is " + ThreadMode + ".");
+            if (ThreadMode == "pool")
+            {
+                int workerThreads;
+                int portThreads;
+                ThreadPool.GetMinThreads(out workerThreads, out portThreads);
+                Console.WriteLine("\nMinimum worker threads: \t{0}" +
+                    "\nMinimum completion port threads: {1}",
+                    workerThreads, portThreads);
+                ThreadPool.GetMaxThreads(out workerThreads, out portThreads);
+                Console.WriteLine("Maximum worker threads: \t{0}" +
+                    "\nMaximum completion port threads: {1}",
+                    workerThreads, portThreads);
 
-            ThreadPool.GetMinThreads(out workerThreads, out portThreads);
-            Console.WriteLine("\nMinimum worker threads: \t{0}" +
+                ThreadPool.SetMinThreads(5000, portThreads);
+                ThreadPool.SetMaxThreads(NumMaxThreads, NumMaxThreads);
+
+                ThreadPool.GetMinThreads(out workerThreads, out portThreads);
+                Console.WriteLine("Minimum worker threads: \t{0}" +
                 "\nMinimum completion port threads: {1}",
                 workerThreads, portThreads);
 
-            // ThreadPool.SetMinThreads(5000, portThreads);
-            ThreadPool.SetMaxThreads(20000, 20000);
-
-            ThreadPool.GetMinThreads(out workerThreads, out portThreads);
-            Console.WriteLine("\nMinimum worker threads: \t{0}" +
-            "\nMinimum completion port threads: {1}",
-            workerThreads, portThreads);
-
-            ThreadPool.GetMaxThreads(out workerThreads, out portThreads);
-            Console.WriteLine("\nMaximum worker threads: \t{0}" +
-                "\nMaximum completion port threads: {1}",
-                workerThreads, portThreads);
-
-            ThreadPool.GetAvailableThreads(out workerThreads,
-                out portThreads);
-            Console.WriteLine("\nAvailable worker threads: \t{0}" +
-                "\nAvailable completion port threads: {1}\n",
-                workerThreads, portThreads);
+                ThreadPool.GetMaxThreads(out workerThreads, out portThreads);
+                Console.WriteLine("Maximum worker threads: \t{0}" +
+                    "\nMaximum completion port threads: {1}",
+                    workerThreads, portThreads);
+                ThreadPool.GetAvailableThreads(out workerThreads,
+                    out portThreads);
+                Console.WriteLine("Available worker threads: \t{0}" +
+                    "\nAvailable completion port threads: {1}\n",
+                    workerThreads, portThreads);
+            }
             while (true)
             {
                 try
@@ -325,22 +333,27 @@ namespace DNWS
                     // Get one, show some info
                     _parent.Log("Client accepted:" + clientSocket.RemoteEndPoint.ToString());
                     HTTPProcessor hp = new HTTPProcessor(clientSocket, _parent);
-                    // Single thread
-                    // hp.Process();
-                    // End single therad
-                    // Start multi-threads
-                    // Thread threadCaller = new Thread(new ThreadStart(hp.Process));
-                    // threadCaller.Start();
-                    // End multi-threads
-                    // Start thread pool
-                    ThreadPool.QueueUserWorkItem(new WaitCallback(delegate (object state)
+                    switch (ThreadMode)
                     {
-                        HTTPProcessor threadHP = (HTTPProcessor) state;
-                        threadHP.Process();
-                    }), hp);
-                    // ThreadPool.QueueUserWorkItem(state => hp.Process());
-
-                    // End thread pool
+                        case "single":
+                            hp.Process();
+                            break;
+                        case "multi":
+                            Thread threadCaller = new Thread(new ThreadStart(hp.Process));
+                            threadCaller.Start();
+                            break;
+                        case "pool":
+                            ThreadPool.QueueUserWorkItem(new WaitCallback(delegate (object state)
+                            {
+                                HTTPProcessor threadHP = (HTTPProcessor)state;
+                                threadHP.Process();
+                            }), hp);
+                            // ThreadPool.QueueUserWorkItem(state => hp.Process());
+                            break;
+                        default:
+                            hp.Process();
+                            break;
+                    }
                 }
                 catch (Exception ex)
                 {
