@@ -4,10 +4,10 @@ float convert_rgb_to_luma(float4 bgra, uint option)
   switch (option)
   {//https://stackoverflow.com/a/596243/7150241, with some modification from https://en.wikipedia.org/wiki/Luma_(video)
     case 1: //(1) CCIR 601 Luminance (perceived option 1)
-      luma = sqrt(0.2126f * bgra.z + 0.7152f * bgra.y + 0.0722f * bgra.x);
+      luma = 0.2126f * bgra.z + 0.7152f * bgra.y + 0.0722f * bgra.x;
       break;
     case 2: //(2) Luminance (perceived option 2, slower to calculate)
-      luma = sqrt(0.299f * bgra.z * bgra.z + 0.587f * bgra.y * bgra.y + 0.114f * bgra.x * bgra.x);
+      luma = 0.299f * bgra.z * bgra.z + 0.587f * bgra.y * bgra.y + 0.114f * bgra.x * bgra.x;
       break;
     case 0: //(0) Relative Luminance (standard for certain colour spaces)
     default:
@@ -19,8 +19,8 @@ float convert_rgb_to_luma(float4 bgra, uint option)
 __kernel void SobelEdgeDetection(__read_only image2d_t srcImg, __write_only image2d_t dstImg)
 {
   const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
-    CLK_ADDRESS_CLAMP_TO_EDGE | //Clamp to zeros
-    CLK_FILTER_LINEAR;
+                        CLK_ADDRESS_CLAMP_TO_EDGE | //Clamp to zeros
+                        CLK_FILTER_LINEAR;
   int2 coord = (int2)(get_global_id(0), get_global_id(1)); //coord.x, coord.y
   int max_width = get_image_width(srcImg);
   int max_height = get_image_height(srcImg);
