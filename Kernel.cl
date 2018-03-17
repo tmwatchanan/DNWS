@@ -26,57 +26,57 @@ __kernel void SobelEdgeDetection(__read_only image2d_t srcImg, __write_only imag
   int max_height = get_image_height(srcImg);
 
   //row1
-  uint4 bgra_m1m1 = read_imageui(srcImg, smp, (int2)(coord.x-1, coord.y-1));
-  uint4 bgra_m1p0 = read_imageui(srcImg, smp, (int2)(coord.x-1, coord.y));
-  uint4 bgra_m1p1 = read_imageui(srcImg, smp, (int2)(coord.x-1, coord.y+1));
+  uint4 bgra_m1m1 = read_imageui(srcImg, smp, (int2)(coord.x-1, coord.y-1)); //(-1, -1)
+  uint4 bgra_m1p0 = read_imageui(srcImg, smp, (int2)(coord.x-1, coord.y)); //(-1, 0)
+  uint4 bgra_m1p1 = read_imageui(srcImg, smp, (int2)(coord.x-1, coord.y+1)); //(-1, 1)
   //row2
-  uint4 bgra_p0m1 = read_imageui(srcImg, smp, (int2)(coord.x, coord.y-1));
-  uint4 bgra_p0p0 = read_imageui(srcImg, smp, (int2)(coord.x, coord.y));
-  uint4 bgra_p0p1 = read_imageui(srcImg, smp, (int2)(coord.x, coord.y+1));
+  uint4 bgra_p0m1 = read_imageui(srcImg, smp, (int2)(coord.x, coord.y-1)); //(0, -1)
+  uint4 bgra_p0p0 = read_imageui(srcImg, smp, (int2)(coord.x, coord.y)); //(0, 0)
+  uint4 bgra_p0p1 = read_imageui(srcImg, smp, (int2)(coord.x, coord.y+1)); //(0, 1)
   //row3
-  uint4 bgra_p1m1 = read_imageui(srcImg, smp, (int2)(coord.x+1, coord.y-1));
-  uint4 bgra_p1p0 = read_imageui(srcImg, smp, (int2)(coord.x+1, coord.y));
-  uint4 bgra_p1p1 = read_imageui(srcImg, smp, (int2)(coord.x+1, coord.y+1));
+  uint4 bgra_p1m1 = read_imageui(srcImg, smp, (int2)(coord.x+1, coord.y-1)); //(1, -1)
+  uint4 bgra_p1p0 = read_imageui(srcImg, smp, (int2)(coord.x+1, coord.y)); //(1, 0)
+  uint4 bgra_p1p1 = read_imageui(srcImg, smp, (int2)(coord.x+1, coord.y+1)); //(1, 1)
 
   //row1
-  float4 bgra_float_m1m1 = convert_float4(bgra_m1m1) / 255.0f;
-  float4 bgra_float_m1p0 = convert_float4(bgra_m1p0) / 255.0f;
-  float4 bgra_float_m1p1 = convert_float4(bgra_m1p1) / 255.0f;
+  float4 bgra_float_m1m1 = convert_float4(bgra_m1m1) / 255.0f; //(-1, -1)
+  float4 bgra_float_m1p0 = convert_float4(bgra_m1p0) / 255.0f; //(-1, 0)
+  float4 bgra_float_m1p1 = convert_float4(bgra_m1p1) / 255.0f; //(-1, 1)
   //row2
-  float4 bgra_float_p0m1 = convert_float4(bgra_p0m1) / 255.0f;
-  float4 bgra_float_p0p0 = convert_float4(bgra_p0p0) / 255.0f;
-  float4 bgra_float_p0p1 = convert_float4(bgra_p0p1) / 255.0f;
+  float4 bgra_float_p0m1 = convert_float4(bgra_p0m1) / 255.0f; //(0, -1)
+  float4 bgra_float_p0p0 = convert_float4(bgra_p0p0) / 255.0f; //(0, 0)
+  float4 bgra_float_p0p1 = convert_float4(bgra_p0p1) / 255.0f; //(0, 1)
   //row3
-  float4 bgra_float_p1m1 = convert_float4(bgra_p1m1) / 255.0f;
-  float4 bgra_float_p1p0 = convert_float4(bgra_p1p0) / 255.0f;
-  float4 bgra_float_p1p1 = convert_float4(bgra_p1p1) / 255.0f;
+  float4 bgra_float_p1m1 = convert_float4(bgra_p1m1) / 255.0f; //(1, -1)
+  float4 bgra_float_p1p0 = convert_float4(bgra_p1p0) / 255.0f; //(1, 0)
+  float4 bgra_float_p1p1 = convert_float4(bgra_p1p1) / 255.0f; //(1, 1)
 
   uint luma_option = 0; //change luminance choice for different formula used for converting rgb to grey
   //row1
-  float luminance_m1m1 = convert_rgb_to_luma(bgra_float_m1m1, luma_option);
-  float luminance_m1p0 = convert_rgb_to_luma(bgra_float_m1p0, luma_option);
-  float luminance_m1p1 = convert_rgb_to_luma(bgra_float_m1p1, luma_option);
+  float luminance_m1m1 = convert_rgb_to_luma(bgra_float_m1m1, luma_option); //(-1, -1)
+  float luminance_m1p0 = convert_rgb_to_luma(bgra_float_m1p0, luma_option); //(-1, 0)
+  float luminance_m1p1 = convert_rgb_to_luma(bgra_float_m1p1, luma_option); //(-1, 1)
   //row2
-  float luminance_p0m1 = convert_rgb_to_luma(bgra_float_p0m1, luma_option);
-  float luminance_p0p0 = convert_rgb_to_luma(bgra_float_p0p0, luma_option);
-  float luminance_p0p1 = convert_rgb_to_luma(bgra_float_p0p1, luma_option);
+  float luminance_p0m1 = convert_rgb_to_luma(bgra_float_p0m1, luma_option); //(0, -1)
+  float luminance_p0p0 = convert_rgb_to_luma(bgra_float_p0p0, luma_option); //(0, 0)
+  float luminance_p0p1 = convert_rgb_to_luma(bgra_float_p0p1, luma_option); //(0, 1)
   //row3
-  float luminance_p1m1 = convert_rgb_to_luma(bgra_float_p1m1, luma_option);
-  float luminance_p1p0 = convert_rgb_to_luma(bgra_float_p1p0, luma_option);
-  float luminance_p1p1 = convert_rgb_to_luma(bgra_float_p1p1, luma_option);
+  float luminance_p1m1 = convert_rgb_to_luma(bgra_float_p1m1, luma_option); //(1, -1)
+  float luminance_p1p0 = convert_rgb_to_luma(bgra_float_p1p0, luma_option); //(1, 0)
+  float luminance_p1p1 = convert_rgb_to_luma(bgra_float_p1p1, luma_option); //(1, 1)
 
   //row1
-  uint intensity_m1m1 = (uint) (luminance_m1m1 * 255.0f);
-  uint intensity_m1p0 = (uint) (luminance_m1p0 * 255.0f);
-  uint intensity_m1p1 = (uint) (luminance_m1p1 * 255.0f);
+  uint intensity_m1m1 = (uint) (luminance_m1m1 * 255.0f); //(-1, -1)
+  uint intensity_m1p0 = (uint) (luminance_m1p0 * 255.0f); //(-1, 0)
+  uint intensity_m1p1 = (uint) (luminance_m1p1 * 255.0f); //(-1, 1)
   //row2
-  uint intensity_p0m1 = (uint) (luminance_p0m1 * 255.0f);
-  uint intensity_p0p0 = (uint) (luminance_p0p0 * 255.0f);
-  uint intensity_p0p1 = (uint) (luminance_p0p1 * 255.0f);
+  uint intensity_p0m1 = (uint) (luminance_p0m1 * 255.0f); //(0, -1)
+  uint intensity_p0p0 = (uint) (luminance_p0p0 * 255.0f); //(0, 0)
+  uint intensity_p0p1 = (uint) (luminance_p0p1 * 255.0f); //(0, 1)
   //row3
-  uint intensity_p1m1 = (uint) (luminance_p1m1 * 255.0f);
-  uint intensity_p1p0 = (uint) (luminance_p1p0 * 255.0f);
-  uint intensity_p1p1 = (uint) (luminance_p1p1 * 255.0f);
+  uint intensity_p1m1 = (uint) (luminance_p1m1 * 255.0f); //(1, -1)
+  uint intensity_p1p0 = (uint) (luminance_p1p0 * 255.0f); //(1, 0)
+  uint intensity_p1p1 = (uint) (luminance_p1p1 * 255.0f); //(1, 1)
 
   uint gradient_x = intensity_m1m1 * (-1) + intensity_m1p1 * (+1)
                   + intensity_p0m1 * (-2) + intensity_p0p1 * (+2)
