@@ -16,8 +16,22 @@ float convert_rgb_to_luma(float4 bgra, uint option)
   }
   return luma;
 }
+
 __kernel void SobelEdgeDetection(__read_only image2d_t srcImg, __write_only image2d_t dstImg)
 {
+  __constant int3 flipped_sobel_kernel_x[3] =
+  {
+    (int3)(-1, 0, 1),
+    (int3)(-2, 0, 2),
+    (int3)(-1, 0, 1)
+  };
+  __constant int3 flipped_sobel_kernel_y[3] =
+  {
+    (int3)(-1, -2, -1),
+    (int3)(0, 0, 0),
+    (int3)(1, 2, 1)
+  };
+
   const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
                         CLK_ADDRESS_CLAMP_TO_EDGE | //Clamp to zeros
                         CLK_FILTER_LINEAR;
@@ -78,12 +92,13 @@ __kernel void SobelEdgeDetection(__read_only image2d_t srcImg, __write_only imag
   uint intensity_p1p0 = (uint) (luminance_p1p0 * 255.0f); //(1, 0)
   uint intensity_p1p1 = (uint) (luminance_p1p1 * 255.0f); //(1, 1)
 
-  uint gradient_x = intensity_m1m1 * (-1) + intensity_m1p1 * (+1)
-                  + intensity_p0m1 * (-2) + intensity_p0p1 * (+2)
-                  + intensity_p1m1 * (-1) + intensity_p1p1 * (+1);
+  int gradient_x = (intensity_m1m1 * flipped_sobel_kernel_x[0].x) + (intensity_m1p0 * flipped_sobel_kernel_x[0].y) + (intensity_m1p1 * flipped_sobel_kernel_x[0].z)
+                  + (intensity_p0m1 * flipped_sobel_kernel_x[1].x) + (intensity_p0p0 * flipped_sobel_kernel_x[1].y) + (intensity_p0p1 * flipped_sobel_kernel_x[1].z)
+                  + (intensity_p1m1 * flipped_sobel_kernel_x[2].x) + (intensity_p1p0 * flipped_sobel_kernel_x[2].y) + (intensity_p1p1 * flipped_sobel_kernel_x[2].z);
 
-  uint gradient_y = intensity_m1m1 * (-1) + intensity_m1p0 * (-2) + intensity_m1p1 * (-1)
-                  + intensity_p1m1 * (+1) + intensity_p1p0 * (+2) + intensity_p1p1 * (+1);
+  int gradient_y = (intensity_m1m1 * flipped_sobel_kernel_y[0].x) + (intensity_m1p0 * flipped_sobel_kernel_y[0].y) + (intensity_m1p1 * flipped_sobel_kernel_y[0].z)
+                  + (intensity_p0m1 * flipped_sobel_kernel_y[1].x) + (intensity_p0p0 * flipped_sobel_kernel_y[1].y) + (intensity_p0p1 * flipped_sobel_kernel_y[1].z)
+                  + (intensity_p1m1 * flipped_sobel_kernel_y[2].x) + (intensity_p1p0 * flipped_sobel_kernel_y[2].y) + (intensity_p1p1 * flipped_sobel_kernel_y[2].z);
 
   bgra_p0p0.x = bgra_p0p0.y = bgra_p0p0.z = (uint) (sqrt(gradient_x * gradient_x + gradient_y * gradient_y));
   bgra_p0p0.w = 255;
