@@ -190,7 +190,7 @@ namespace DNWS
             LogError(error, "Cl.GetProgramBuildInfo");
             return new HTTPResponse(404);
           }
-          Kernel kernel = Cl.CreateKernel(program, "edgeDetection", out error);
+          Kernel kernel = Cl.CreateKernel(program, _parameters["KernelFunction"], out error);
           LogError(error, "Cl.CreateKernel");
 
           // Create image memory objects

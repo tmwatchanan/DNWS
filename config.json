@@ -25,7 +25,8 @@
             "Postprocessing" :"false",
             "Parameters" : {
                 "AllowDeviceType" : "Gpu|Cpu|All|Default|Accelerator",
-                "DeviceType" : "Gpu"
+                "DeviceType" : "Gpu",
+                "KernelFunction" : "SobelEdgeDetection"
             }
         },
         {

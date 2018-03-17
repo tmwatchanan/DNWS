@@ -1,4 +1,22 @@
-__kernel void edgeDetection(__read_only image2d_t srcImg, __write_only image2d_t dstImg)
+float convert_rgb_to_luma(float4 bgra, uint option)
+{
+  float luma;
+  switch (option)
+  {//https://stackoverflow.com/a/596243/7150241, with some modification from https://en.wikipedia.org/wiki/Luma_(video)
+    case 1: //(1) CCIR 601 Luminance (perceived option 1)
+      luma = sqrt(0.2126f * bgra.z + 0.7152f * bgra.y + 0.0722f * bgra.x);
+      break;
+    case 2: //(2) Luminance (perceived option 2, slower to calculate)
+      luma = sqrt(0.299f * bgra.z * bgra.z + 0.587f * bgra.y * bgra.y + 0.114f * bgra.x * bgra.x);
+      break;
+    case 0: //(0) Relative Luminance (standard for certain colour spaces)
+    default:
+      luma = sqrt(0.2989f * bgra.z + 0.587f * bgra.y + 0.114f * bgra.x);
+      break;
+  }
+  return luma;
+}
+__kernel void SobelEdgeDetection(__read_only image2d_t srcImg, __write_only image2d_t dstImg)
 {
   const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
     CLK_ADDRESS_CLAMP_TO_EDGE | //Clamp to zeros
@@ -33,27 +51,19 @@ __kernel void edgeDetection(__read_only image2d_t srcImg, __write_only image2d_t
   float4 bgra_float_p1p0 = convert_float4(bgra_p1p0) / 255.0f;
   float4 bgra_float_p1p1 = convert_float4(bgra_p1p1) / 255.0f;
 
+  uint luma_option = 0; //change luminance choice for different formula used for converting rgb to grey
   //row1
-  float luminance_m1m1 =  sqrt(0.241f * bgra_float_m1m1.z * bgra_float_m1m1.z + 0.691f * 
-                    bgra_float_m1m1.y * bgra_float_m1m1.y + 0.068f * bgra_float_m1m1.x * bgra_float_m1m1.x);
-  float luminance_m1p0 =  sqrt(0.241f * bgra_float_m1p0.z * bgra_float_m1p0.z + 0.691f * 
-                    bgra_float_m1p0.y * bgra_float_m1p0.y + 0.068f * bgra_float_m1p0.x * bgra_float_m1p0.x);
-  float luminance_m1p1 =  sqrt(0.241f * bgra_float_m1p1.z * bgra_float_m1p1.z + 0.691f * 
-                    bgra_float_m1p1.y * bgra_float_m1p1.y + 0.068f * bgra_float_m1p1.x * bgra_float_m1p1.x);
+  float luminance_m1m1 = convert_rgb_to_luma(bgra_float_m1m1, luma_option);
+  float luminance_m1p0 = convert_rgb_to_luma(bgra_float_m1p0, luma_option);
+  float luminance_m1p1 = convert_rgb_to_luma(bgra_float_m1p1, luma_option);
   //row2
-  float luminance_p0m1 =  sqrt(0.241f * bgra_float_p0m1.z * bgra_float_p0m1.z + 0.691f * 
-                    bgra_float_p0m1.y * bgra_float_p0m1.y + 0.068f * bgra_float_p0m1.x * bgra_float_p0m1.x);
-  float luminance_p0p0 =  sqrt(0.241f * bgra_float_p0p0.z * bgra_float_p0p0.z + 0.691f * 
-                    bgra_float_p0p0.y * bgra_float_p0p0.y + 0.068f * bgra_float_p0p0.x * bgra_float_p0p0.x);
-  float luminance_p0p1 =  sqrt(0.241f * bgra_float_p0p1.z * bgra_float_p0p1.z + 0.691f * 
-                    bgra_float_p0p1.y * bgra_float_p0p1.y + 0.068f * bgra_float_p0p1.x * bgra_float_p0p1.x);
+  float luminance_p0m1 = convert_rgb_to_luma(bgra_float_p0m1, luma_option);
+  float luminance_p0p0 = convert_rgb_to_luma(bgra_float_p0p0, luma_option);
+  float luminance_p0p1 = convert_rgb_to_luma(bgra_float_p0p1, luma_option);
   //row3
-  float luminance_p1m1 =  sqrt(0.241f * bgra_float_p1m1.z * bgra_float_p1m1.z + 0.691f * 
-                    bgra_float_p1m1.y * bgra_float_p1m1.y + 0.068f * bgra_float_p1m1.x * bgra_float_p1m1.x);
-  float luminance_p1p0 =  sqrt(0.241f * bgra_float_p1p0.z * bgra_float_p1p0.z + 0.691f * 
-                    bgra_float_p1p0.y * bgra_float_p1p0.y + 0.068f * bgra_float_p1p0.x * bgra_float_p1p0.x);
-  float luminance_p1p1 =  sqrt(0.241f * bgra_float_p1p1.z * bgra_float_p1p1.z + 0.691f * 
-                    bgra_float_p1p1.y * bgra_float_p1p1.y + 0.068f * bgra_float_p1p1.x * bgra_float_p1p1.x);
+  float luminance_p1m1 = convert_rgb_to_luma(bgra_float_p1m1, luma_option);
+  float luminance_p1p0 = convert_rgb_to_luma(bgra_float_p1p0, luma_option);
+  float luminance_p1p1 = convert_rgb_to_luma(bgra_float_p1p1, luma_option);
 
   //row1
   uint intensity_m1m1 = (uint) (luminance_m1m1 * 255.0f);
@@ -75,7 +85,6 @@ __kernel void edgeDetection(__read_only image2d_t srcImg, __write_only image2d_t
   uint gradient_y = intensity_m1m1 * (-1) + intensity_m1p0 * (-2) + intensity_m1p1 * (-1)
                   + intensity_p1m1 * (+1) + intensity_p1p0 * (+2) + intensity_p1p1 * (+1);
 
-  // uint4 bgra = read_imageui(srcImg, smp, (int2)(coord.x, coord.y));
   bgra_p0p0.x = bgra_p0p0.y = bgra_p0p0.z = (uint) (sqrt(gradient_x * gradient_x + gradient_y * gradient_y));
   bgra_p0p0.w = 255;
   write_imageui(dstImg, coord, bgra_p0p0);
