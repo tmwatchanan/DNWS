@@ -103,7 +103,7 @@ namespace DNWS
         StringBuilder sb = new StringBuilder();
         sb.Append("<form method=\"post\">");
         sb.Append("Image URL:");
-        sb.Append("<input type=\"text\" name=\"imageUploadUrl\" id=\"imageUploadUrl\" />");
+        sb.Append("<input type=\"text\" name=\"imageUploadUrl\" id=\"imageUploadUrl\" value=\"https://upload.wikimedia.org/wikipedia/commons/f/f0/Valve_original_%281%29.PNG\" />");
         sb.Append("<input type=\"submit\" value=\"Retrieve Image\" name=\"submit\" />");
         sb.Append("</form>");
         return sb;
