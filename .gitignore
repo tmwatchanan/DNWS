@@ -1,4 +1,6 @@
 project.lock.json
+DNWS260.code-workspace
+Dockerfile
 bin/
 obj/
 Migrations/

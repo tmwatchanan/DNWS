@@ -1,8 +1,9 @@
 ﻿{
     "DocumentRoot": ".",
     "Port": "8080",
-    "MaxThreads": 20000,
-    "Thread": "pool",
+    "ThreadPoolSize" : "10",
+    "AllowThreadModel" : "Pool|Multi|Single",
+    "ThreadModel" : "Single", 
     "Plugins" : [
         {
             "Path" : "stat",
@@ -16,6 +17,17 @@
             "Class" : "DNWS.OXPlugin",
             "Preprocessing" : "false",
             "Postprocessing" :"false" 
+        },
+        {
+            "Path" : "gpu",
+            "Class" : "DNWS.GPUPlugin",
+            "Preprocessing" : "false",
+            "Postprocessing" :"false",
+            "Parameters" : {
+                "AllowDeviceType" : "Gpu|Cpu|All|Default|Accelerator",
+                "DeviceType" : "Gpu",
+                "KernelFunction" : "SobelOperator"
+            }
         },
         {
             "Path" : "delay",

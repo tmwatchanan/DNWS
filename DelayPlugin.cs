@@ -23,7 +23,7 @@ namespace DNWS
       Int32 delay = 0;
       if (parts.Length > 1) {
         try {
-          delay = Int32.Parse(parts[1]);
+          delay = Convert.ToInt32(parts[1]);
         } catch (Exception ex) {
           response = new HTTPResponse(400);
           response.body = Encoding.UTF8.GetBytes(ex.ToString());

@@ -8,6 +8,8 @@ namespace DNWS
 {
   public class HTTPRequest
   {
+    public const string METHOD_POST = "POST";
+    public const string METHOD_GET = "GET";
     protected String _url;
     protected String _filename;
     protected static ConcurrentDictionary<String, String> _propertyListDictionary = null;
@@ -58,11 +60,11 @@ namespace DNWS
         _status = 401;
         return;
       }
-      if (!statusLine[0].ToLower().Equals("get"))
+      if (statusLine[0].ToLower().Equals("get"))
       {
-        _method = "GET";
-      } else if(!statusLine[0].ToLower().Equals("post")) {
-        _method = "POST";
+        _method = METHOD_GET;
+      } else if(statusLine[0].ToLower().Equals("post")) {
+        _method = METHOD_POST;
       } else {
         _status = 501;
         return;
@@ -94,11 +96,11 @@ namespace DNWS
             _requestListDictionary = new ConcurrentDictionary<string, string>(_requestListDictionaryOriginal);
           }
         } else { // Length == 2, GET url request
-          addProperty(pair[0], pair[1]);
+          AddProperty(pair[0], pair[1]);
         }
       }
     }
-    public String getPropertyByKey(String key)
+    public String GetPropertyByKey(String key)
     {
       if(_propertyListDictionary.ContainsKey(key.ToLower())) {
         return _propertyListDictionary[key.ToLower()];
@@ -106,7 +108,7 @@ namespace DNWS
         return null;
       }
     }
-    public String getRequestByKey(String key)
+    public String GetRequestByKey(String key)
     {
       if(_requestListDictionary.ContainsKey(key.ToLower())) {
         return _requestListDictionary[key.ToLower()];
@@ -115,11 +117,11 @@ namespace DNWS
       }
     }
 
-    public void addProperty(String key, String value)
+    public void AddProperty(String key, String value)
     {
       _propertyListDictionary[key.ToLower()] = value;
     }
-    public void addRequest(String key, String value)
+    public void AddRequest(String key, String value)
     {
       _requestListDictionary[key.ToLower()] = value;
     }
