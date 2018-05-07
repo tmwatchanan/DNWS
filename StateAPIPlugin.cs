@@ -55,9 +55,13 @@ namespace DNWS
         // Create new list of response model ,this depend on output format;
         List<StatusResponse> responseList = new List<StatusResponse>();
         // Fill in  response model list
-        foreach (KeyValuePair<String, int> entry in statDictionary)
+        using (var client = Manager.GetClient())
         {
-          responseList.Add(new StatusResponse(entry.Key, entry.Value));
+          List<string> keys = client.GetAllKeys();
+          foreach (String key in keys)
+          {
+            responseList.Add(new StatusResponse(key, client.Get<int>(key)));
+          }
         }
         // Set response status and type
         response = new HTTPResponse(200);
